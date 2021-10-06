@@ -3,14 +3,15 @@ package com.example.covidapiservicemodule.ui.viewmodel
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.bangover.carsalescovid.util.TestCoroutineRule
 import com.example.covidapiservicemodule.domain.GetTotalReportsUseCase
+import com.example.covidapiservicemodule.util.CovidViewModelFactory
+import com.example.covidapiservicemodule.util.GetDate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-
 import org.junit.runner.RunWith
-import org.junit.runners.Parameterized.Parameters
 import org.mockito.Mock
+import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
 import org.mockito.junit.MockitoJUnitRunner
 
@@ -25,6 +26,7 @@ class CovidApiViewModelTest{
     var testCoroutineRule = TestCoroutineRule()
 
     private lateinit var viewModel: CovidApiViewModel
+    private lateinit var factory: CovidViewModelFactory
 
     @Mock
     lateinit var getTotalReportsUseCase: GetTotalReportsUseCase
@@ -33,13 +35,23 @@ class CovidApiViewModelTest{
     fun setUp() {
         MockitoAnnotations.initMocks(this)
         viewModel = CovidApiViewModel(getTotalReportsUseCase)
+        factory = CovidViewModelFactory()
     }
 
     @Test
-    @Parameters
-    fun runTest(){
+    fun should_returnError_when_dataIsNull(){
         testCoroutineRule.runBlockingTest {
-            viewModel.getTotalReports("2021-09-30")
+            val covidData = viewModel.getTotalReports(GetDate().getDateWithOneDayMore())
+            assert(covidData == null)
+        }
+    }
+
+    @Test
+    fun should_returnSuccess_when_dataIsNotNull(){
+        testCoroutineRule.runBlockingTest {
+            Mockito.`when`(getTotalReportsUseCase.invoke(GetDate().getDateWithOneDayLess())).thenReturn(factory.getCovidData())
+            val covidData = viewModel.getTotalReports(GetDate().getDateWithOneDayLess())
+            assert(covidData != null)
         }
     }
 }
